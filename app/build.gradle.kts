@@ -74,4 +74,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.4")
 }
