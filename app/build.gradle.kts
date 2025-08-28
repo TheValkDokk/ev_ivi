@@ -77,4 +77,7 @@ dependencies {
     
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
+
+    implementation("com.kakaomobility.knsdk:knsdk_ui:1.9.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
 }
