@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.evn.ev_ivi.features.map.presentation.screen.MapPanelScreen
 import com.evn.ev_ivi.ui.theme.EV_IVITheme
 import org.koin.compose.KoinApplication
 
@@ -21,11 +22,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             KoinApplication(application = {}) {
                 EV_IVITheme {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        Greeting(
-                            name = "Android",
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
+//                        Greeting(
+//                            name = "Android",
+//                            modifier = Modifier.padding(innerPadding)
+//                        )
+                        MapPanelScreen()
                     }
                 }
             }
