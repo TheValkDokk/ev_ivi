@@ -62,10 +62,6 @@ class LoginViewModel(
         }
     }
 
-    fun clearError() {
-        errorMessage = null
-    }
-
     fun resetLoginState() {
         isLoginSuccessful = false
     }

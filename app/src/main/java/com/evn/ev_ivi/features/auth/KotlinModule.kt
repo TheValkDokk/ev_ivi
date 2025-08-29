@@ -12,8 +12,8 @@ import org.koin.dsl.module
 
 val authModule = module {
     single<AuthRemoteDatasource> { AuthRemoteDatasourceImpl(get()) }
-    single<LoginRepository> { LoginRepositoryImpl(get(), get()) }
-    single { LoginUseCase(get()) }
+    single<LoginRepository> { LoginRepositoryImpl(get()) }
+    single { LoginUseCase(get(),get()) }
     viewModel { LoginViewModel(get()) }
     single { NetworkService.authApi(get()) }
 }

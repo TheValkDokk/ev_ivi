@@ -1,5 +1,5 @@
 package com.evn.ev_ivi.features.auth.domain.repository
 
 interface LoginRepository {
-    suspend fun login(username: String, password: String): Result<Unit>
+    suspend fun login(username: String, password: String): Result<String>
 }

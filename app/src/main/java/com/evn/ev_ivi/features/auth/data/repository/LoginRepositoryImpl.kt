@@ -6,14 +6,17 @@ import com.evn.ev_ivi.features.auth.domain.repository.LoginRepository
 
 class LoginRepositoryImpl(
     private val authRemoteDatasource: AuthRemoteDatasource,
-    private val sharedPreferences: SharedPreferences
 ) : LoginRepository {
-    
-    override suspend fun login(username: String, password: String): Result<Unit> {
+
+    override suspend fun login(username: String, password: String): Result<String> {
         return try {
             val response = authRemoteDatasource.login(username, password)
-
-            Result.success(Unit)
+            val token = response.token
+            if (token.isNotEmpty()) {
+                Result.success(token)
+            } else {
+                Result.failure(Exception("Invalid token"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
