@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,12 +38,21 @@ fun MapPanelScreen() {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Speech to Text Demo",
-                style = MaterialTheme.typography.headlineMedium
-            )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = screenText.ifEmpty { "Recognized text will appear here..." },
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
+//            TextField(
+//                state = rememberTextFieldState(initialText = "Hello"),
+//                label = { Text("Label") }
+//            )
 
             if (hasPermission) {
                 SpeechToTextButton(
@@ -54,18 +64,6 @@ fun MapPanelScreen() {
                 Text(
                     text = "Microphone permission required",
                     color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = screenText.ifEmpty { "Recognized text will appear here..." },
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
