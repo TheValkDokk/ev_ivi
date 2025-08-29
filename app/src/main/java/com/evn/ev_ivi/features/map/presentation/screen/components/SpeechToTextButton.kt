@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +53,7 @@ fun SpeechToTextButton(
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                imageVector = if (isListening) Icons.Default.Call else Icons.Default.Done,
+                imageVector = Icons.Default.Home,
                 contentDescription = if (isListening) "Stop listening" else "Start listening",
                 modifier = Modifier.size(24.dp)
             )

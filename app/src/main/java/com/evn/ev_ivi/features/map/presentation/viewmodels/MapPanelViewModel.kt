@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.internal.platform.PlatformRegistry.applicationContext
 
 class MapPanelViewModel(
-    @SuppressLint("StaticFieldLeak") private val context: Context
 ) : ViewModel() {
     private val _kakaoInit = MutableStateFlow(false)
     val kakaoInit = _kakaoInit.asStateFlow()

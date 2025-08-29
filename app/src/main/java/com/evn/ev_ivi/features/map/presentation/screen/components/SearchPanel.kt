@@ -73,16 +73,6 @@ fun SearchPanel(
                 placeholder = { Text("Enter search query or use voice") },
                 modifier = Modifier.weight(1f)
             )
-            
-            IconButton(
-                onClick = { speechToTextViewModel.toggleListening() }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Call,
-                    contentDescription = "Voice search",
-                    tint = if (isListening) MaterialTheme.colorScheme.primary else Color.Gray
-                )
-            }
         }
 
         error?.let { errorMessage ->
