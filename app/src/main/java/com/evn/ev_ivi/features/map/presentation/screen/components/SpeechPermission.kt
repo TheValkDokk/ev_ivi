@@ -38,3 +38,4 @@ fun rememberSpeechPermission(
 
     return hasPermission
 }
+

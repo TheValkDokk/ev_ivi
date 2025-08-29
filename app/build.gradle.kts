@@ -21,12 +21,15 @@ android {
     }
 
     buildTypes {
+//        release {
+//            isMinifyEnabled = false
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+//        }
         release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -80,4 +83,5 @@ dependencies {
 
     implementation("com.kakaomobility.knsdk:knsdk_ui:1.9.4")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("androidx.databinding:viewbinding:8.12.1")
 }

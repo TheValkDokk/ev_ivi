@@ -1,6 +1,7 @@
 package com.evn.ev_ivi.features.map.presentation.screen
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.evn.ev_ivi.features.map.presentation.screen.components.Map
 import com.evn.ev_ivi.features.map.presentation.screen.components.SpeechToTextButton
 import com.evn.ev_ivi.features.map.presentation.screen.components.rememberSpeechPermission
 
@@ -28,42 +30,47 @@ fun MapPanelScreen() {
     )
     var screenText by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Speech to Text Demo",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        if (hasPermission) {
-            SpeechToTextButton(
-                onTextRecognized = { text ->
-                    screenText = text
-                }
-            )
-        } else {
-            Text(
-                text = "Microphone permission required",
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth()
+    Row {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = screenText.ifEmpty { "Recognized text will appear here..." },
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyLarge
+                text = "Speech to Text Demo",
+                style = MaterialTheme.typography.headlineMedium
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            if (hasPermission) {
+                SpeechToTextButton(
+                    onTextRecognized = { text ->
+                        screenText = text
+                    }
+                )
+            } else {
+                Text(
+                    text = "Microphone permission required",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = screenText.ifEmpty { "Recognized text will appear here..." },
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
+        Map(
+            modifier = Modifier.weight(2f)
+        )
     }
 }
