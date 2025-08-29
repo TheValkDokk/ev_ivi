@@ -7,8 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -21,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.evn.ev_ivi.features.map.presentation.screen.components.Map
+import com.evn.ev_ivi.features.map.presentation.screen.components.SearchPanel
 import com.evn.ev_ivi.features.map.presentation.screen.components.SpeechToTextButton
 import com.evn.ev_ivi.features.map.presentation.screen.components.rememberSpeechPermission
 
@@ -31,44 +37,55 @@ fun MapPanelScreen() {
     )
     var screenText by remember { mutableStateOf("") }
 
-    Row {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
+    Scaffold (
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    // log out
+                },
             ) {
-                Text(
-                    text = screenText.ifEmpty { "Recognized text will appear here..." },
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
-//            TextField(
-//                state = rememberTextFieldState(initialText = "Hello"),
-//                label = { Text("Label") }
-//            )
-
-            if (hasPermission) {
-                SpeechToTextButton(
-                    onTextRecognized = { text ->
-                        screenText = text
-                    }
-                )
-            } else {
-                Text(
-                    text = "Microphone permission required",
-                    color = MaterialTheme.colorScheme.error
-                )
+                Icon(Icons.Filled.Add, "Floating action button.")
             }
         }
-        Map(
-            modifier = Modifier.weight(2f)
-        )
+    ){ padding ->
+        Row {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+//                Card(
+//                    modifier = Modifier.fillMaxWidth()
+//                ) {
+//                    Text(
+//                        text = screenText.ifEmpty { "Recognized text will appear here..." },
+//                        modifier = Modifier.padding(16.dp),
+//                        style = MaterialTheme.typography.bodyLarge
+//                    )
+//                }
+
+                SearchPanel(
+                    modifier = Modifier.fillMaxWidth().weight(4f)
+                )
+
+                if (hasPermission) {
+                    SpeechToTextButton(
+                        modifier = Modifier.weight(1f),
+                        onTextRecognized = { text ->
+                            screenText = text
+                        }
+                    )
+                } else {
+                    Text(
+                        text = "Microphone permission required",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            Map(
+                modifier = Modifier.weight(2f)
+            )
+        }
     }
 }

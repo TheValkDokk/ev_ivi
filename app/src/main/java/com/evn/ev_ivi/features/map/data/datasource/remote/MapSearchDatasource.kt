@@ -13,7 +13,7 @@ class MapSearchDatasourceImpl (
 ) : MapSearchDatasource {
     override suspend fun search(request: SearchRequestModel): List<MapLocationModel> {
         return try {
-            val response = api.search(request)
+            val response = api.search(request.query)
             response.results
         } catch (e: Exception) {
             emptyList()

@@ -42,9 +42,11 @@ class SpeechToTextViewModel(
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 _error.value = null
+                print("Ready for Speech")
             }
 
             override fun onBeginningOfSpeech() {
+                print("Begin Speech")
                 _isListening.value = true
             }
 
@@ -73,8 +75,10 @@ class SpeechToTextViewModel(
             }
 
             override fun onResults(results: Bundle?) {
+                print("onResults")
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
+                    print("Result: ${matches[0]}")
                     _recognizedText.value = matches[0]
                 }
                 _isListening.value = false

@@ -2,6 +2,7 @@ package com.evn.ev_ivi
 
 import android.app.Application
 import com.evn.ev_ivi.core.di.appModule
+import com.evn.ev_ivi.core.navigation.navigationModule
 import com.evn.ev_ivi.features.auth.authModule
 import com.evn.ev_ivi.features.map.mapPanelModules
 import org.koin.android.ext.koin.androidContext
@@ -14,7 +15,7 @@ class MainApplication: Application() {
         startKoin{
             androidLogger()
             androidContext(this@MainApplication)
-            val modulesList = listOf(appModule, mapPanelModules, authModule)
+            val modulesList = listOf(appModule, navigationModule, mapPanelModules, authModule)
             modules(modulesList)
         }
     }

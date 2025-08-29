@@ -7,13 +7,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.evn.ev_ivi.features.auth.presentation.screen.LoginScreen
 import com.evn.ev_ivi.features.map.presentation.screen.MapPanelScreen
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val navigationViewModel: NavigationViewModel = koinViewModel()
+    
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = navigationViewModel.getStartDestination()
     ) {
         composable(Routes.LOGIN) {
             LoginScreen(navController)
