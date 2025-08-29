@@ -34,7 +34,6 @@ fun SpeechToTextButton(
 ) {
     val isListening by viewModel.isListening.collectAsState()
     val recognizedText by viewModel.recognizedText.collectAsState()
-    val error by viewModel.error.collectAsState()
 
     LaunchedEffect(recognizedText) {
         if (recognizedText.isNotEmpty()) {
@@ -63,23 +62,5 @@ fun SpeechToTextButton(
                 modifier = Modifier.size(24.dp)
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = when {
-                error != null -> "Error: $error"
-                isListening -> "Listening..."
-                recognizedText.isNotEmpty() -> recognizedText
-                else -> "Tap to speak"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = if (error != null)
-                MaterialTheme.colorScheme.error
-            else
-                MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 200.dp)
-        )
     }
 }

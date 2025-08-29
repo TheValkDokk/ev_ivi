@@ -66,7 +66,7 @@ fun MapPanelScreen() {
 //                }
 
                 SearchPanel(
-                    modifier = Modifier.fillMaxWidth().weight(4f)
+                    modifier = Modifier.fillMaxWidth().weight(5f)
                 )
 
                 if (hasPermission) {
