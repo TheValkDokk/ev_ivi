@@ -35,7 +35,6 @@ fun MapPanelScreen() {
     val hasPermission = rememberSpeechPermission(
         context = LocalContext.current
     )
-    var screenText by remember { mutableStateOf("") }
 
     Scaffold (
         floatingActionButton = {
@@ -55,15 +54,6 @@ fun MapPanelScreen() {
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-//                Card(
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text(
-//                        text = screenText.ifEmpty { "Recognized text will appear here..." },
-//                        modifier = Modifier.padding(16.dp),
-//                        style = MaterialTheme.typography.bodyLarge
-//                    )
-//                }
 
                 SearchPanel(
                     modifier = Modifier.fillMaxWidth().weight(5f)
@@ -72,9 +62,7 @@ fun MapPanelScreen() {
                 if (hasPermission) {
                     SpeechToTextButton(
                         modifier = Modifier.weight(1f),
-                        onTextRecognized = { text ->
-                            screenText = text
-                        }
+                        onTextRecognized = { text -> }
                     )
                 } else {
                     Text(

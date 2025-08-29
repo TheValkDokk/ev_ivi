@@ -21,10 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
+import com.evn.ev_ivi.features.map.wgs84ToWcongnamul
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -38,14 +40,12 @@ fun SearchResultItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
-                Log.d("WWWW", "QQQQ")
                 val locationProvider = LocationServices.getFusedLocationProviderClient(context)
-                Log.d("WWWW", "WWWW")
                 locationProvider.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { currentLocation ->
-                        Log.d("WWWW", "EEEE")
-                        val startLat = (currentLocation.latitude * 10000).toInt()
-                        val startLong = (currentLocation.longitude * 10000).toInt()
+                        val startLat = currentLocation.latitude
+                        val startLong = currentLocation.longitude
+                        Log.d("WWWW" , "startLat: $startLat, startLong: $startLong")
                         mapViewModel.onNavigate(startLat, startLong, location)
                     }
             },

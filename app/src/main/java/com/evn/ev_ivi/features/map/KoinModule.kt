@@ -15,7 +15,7 @@ import org.koin.dsl.module
 
 val mapPanelModules = module {
     viewModel { SpeechToTextViewModel(androidContext()) }
-    viewModel { MapPanelViewModel() }
+    viewModel { MapPanelViewModel(androidContext()) }
     viewModel { SearchPanelViewModelL(get()) }
     
     single<MapSearchDatasource> { MapSearchDatasourceImpl(get()) }
