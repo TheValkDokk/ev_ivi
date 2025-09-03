@@ -19,3 +19,23 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Kakao Navigation SDK ProGuard rules
+-keep class com.kakaomobility.knsdk.** { *; }
+-keep interface com.kakaomobility.knsdk.** { *; }
+-keepclassmembers class com.kakaomobility.knsdk.** { *; }
+
+# Keep Kotlin default implementations
+-keep class **$DefaultImpls { *; }
+-keep class **$Companion { *; }
+
+# Keep all classes with native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Keep Kotlin metadata
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod

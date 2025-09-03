@@ -1,5 +1,6 @@
 package com.evn.ev_ivi.features.map.presentation.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,28 +26,57 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.evn.ev_ivi.MainActivity
+import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.presentation.screen.components.Map
 import com.evn.ev_ivi.features.map.presentation.screen.components.SearchPanel
 import com.evn.ev_ivi.features.map.presentation.screen.components.SpeechToTextButton
 import com.evn.ev_ivi.features.map.presentation.screen.components.rememberSpeechPermission
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_X
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
+import com.kakaomobility.knsdk.common.util.FloatPoint
+import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
+import com.kakaomobility.knsdk.map.knmapview.KNMapView
+import com.kakaomobility.knsdk.ui.view.KNNaviView
 
+@SuppressLint("ContextCastToActivity", "MissingPermission")
 @Composable
 fun MapPanelScreen() {
     val hasPermission = rememberSpeechPermission(
         context = LocalContext.current
     )
 
-    Scaffold (
+    val activity = LocalContext.current as MainActivity
+
+    Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // log out
+                    var currentPos = FloatPoint(
+                        KN_DEFAULT_POS_X.toFloat(),
+                        KN_DEFAULT_POS_Y.toFloat()
+                    )
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener { loc ->
+                        val startLat = loc.latitude
+                        val startLong = loc.longitude
+                        val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
+                        currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
+                        activity.mapView.animateCamera(
+                            cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
+                            duration = 400,
+                            withUserLocation = true,
+                            useNorthHeadingMode = true,
+                        )
+                    }
                 },
             ) {
                 Icon(Icons.Filled.Add, "Floating action button.")
             }
         }
-    ){ padding ->
+    ) { padding ->
         Row {
             Column(
                 modifier = Modifier
@@ -56,7 +86,9 @@ fun MapPanelScreen() {
             ) {
 
                 SearchPanel(
-                    modifier = Modifier.fillMaxWidth().weight(5f)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(5f)
                 )
 
                 if (hasPermission) {

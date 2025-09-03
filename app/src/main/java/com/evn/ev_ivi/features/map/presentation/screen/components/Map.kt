@@ -27,6 +27,13 @@ import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
 import com.kakaomobility.knsdk.KNRoutePriority
+import com.kakaomobility.knsdk.KNSDK
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_X
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
+import com.kakaomobility.knsdk.common.util.FloatPoint
+import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
+import com.kakaomobility.knsdk.map.knmapview.KNMapView
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
 import com.kakaomobility.knsdk.ui.view.KNNaviView
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -77,6 +84,34 @@ fun Map(
         }
     }
 
+//    Box(
+//        modifier = modifier
+//            .fillMaxSize()
+//            .padding(16.dp),
+//        contentAlignment = Alignment.Center
+//    ) {
+//        if (kakaoInit && hasPermission) {
+//            AndroidView(
+//                factory = { context ->
+//                    KNNaviView(context).apply {
+//                        useDarkMode = true
+//                        activity.naviView = this
+//                    }
+//                },
+//                update = { view ->
+//                    Log.d("UPDATE", "UPDATE")
+//                    if (!isMapReady) {
+//                        isMapReady = true
+//                    }
+//                },
+//                modifier = Modifier.fillMaxSize()
+//            )
+//        } else {
+//            CircularProgressIndicator()
+//        }
+//    }
+
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -86,9 +121,34 @@ fun Map(
         if (kakaoInit && hasPermission) {
             AndroidView(
                 factory = { context ->
-                    KNNaviView(context).apply {
-                        useDarkMode = true
-                        activity.naviView = this
+                    KNMapView(context).apply {
+
+                        val theme = KNMapTheme.driveDay()
+                        try {
+                            MainApplication.knsdk.bindingMapView(this, theme) { error ->
+                                Log.d("KNSDK", "bindingMapView result: $error")
+                                activity.mapView = this
+                                if (error == null) {
+                                    var currentPos = FloatPoint(
+                                        KN_DEFAULT_POS_X.toFloat(),
+                                        KN_DEFAULT_POS_Y.toFloat()
+                                    )
+                                    // Uncomment when GPS is properly initialized
+                                    // val float = MainApplication.knsdk.sharedGpsManager()?.lastValidGpsData?.pos
+                                    // if(float != null) {
+                                    //     currentPos = FloatPoint(float.x.toFloat(), float.y.toFloat())
+                                    // }
+//                                    this.moveCamera(
+//                                        KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
+//                                        true
+//                                    )
+                                } else {
+                                    Log.e("KNSDK", "Failed to bind map view: $error")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("KNSDK", "Exception during map binding: ${e.message}", e)
+                        }
                     }
                 },
                 update = { view ->

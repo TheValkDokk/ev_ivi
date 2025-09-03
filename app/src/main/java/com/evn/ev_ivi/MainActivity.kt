@@ -1,6 +1,7 @@
 package com.evn.ev_ivi
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,6 +11,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.evn.ev_ivi.core.navigation.AppNavigation
 import com.evn.ev_ivi.ui.theme.EV_IVITheme
+import com.kakaomobility.knsdk.common.gps.KNGPSData
+import com.kakaomobility.knsdk.common.gps.KNGPSReceiver
 import com.kakaomobility.knsdk.common.objects.KNError
 import com.kakaomobility.knsdk.guidance.knguidance.KNGuidance
 import com.kakaomobility.knsdk.guidance.knguidance.KNGuidance_CitsGuideDelegate
@@ -27,14 +30,17 @@ import com.kakaomobility.knsdk.guidance.knguidance.routeguide.objects.KNMultiRou
 import com.kakaomobility.knsdk.guidance.knguidance.safetyguide.KNGuide_Safety
 import com.kakaomobility.knsdk.guidance.knguidance.safetyguide.objects.KNSafety
 import com.kakaomobility.knsdk.guidance.knguidance.voiceguide.KNGuide_Voice
+import com.kakaomobility.knsdk.map.knmapview.KNMapView
 import com.kakaomobility.knsdk.trip.kntrip.knroute.KNRoute
 import com.kakaomobility.knsdk.ui.view.KNNaviView
 
 class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuidance_LocationGuideDelegate,
     KNGuidance_RouteGuideDelegate,
-    KNGuidance_SafetyGuideDelegate, KNGuidance_VoiceGuideDelegate, KNGuidance_CitsGuideDelegate {
+    KNGuidance_SafetyGuideDelegate, KNGuidance_VoiceGuideDelegate, KNGuidance_CitsGuideDelegate,
+    KNGPSReceiver {
 
     lateinit var naviView: KNNaviView
+    lateinit var mapView: KNMapView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -108,5 +114,9 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
 
     override fun didUpdateCitsGuide(aGuidance: KNGuidance, aCitsGuide: KNGuide_Cits) {
         naviView.didUpdateCitsGuide(aGuidance, aCitsGuide)
+    }
+
+    override fun didReceiveGpsData(aGpsData: KNGPSData) {
+        Log.d("Location update", "New Location ${aGpsData.pos}")
     }
 }

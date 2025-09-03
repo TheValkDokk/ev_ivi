@@ -18,18 +18,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     buildTypes {
-//        release {
-//            isMinifyEnabled = false
-//            proguardFiles(
-//                getDefaultProguardFile("proguard-android-optimize.txt"),
-//                "proguard-rules.pro"
-//            )
-//        }
         release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("debug")
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -81,7 +83,12 @@ dependencies {
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
 
+    // Kakao Navigation SDK - complete dependency set
     implementation("com.kakaomobility.knsdk:knsdk_ui:1.9.4")
+    
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.databinding:viewbinding:8.12.1")
+    
+    // MultiDex support for large apps
+    implementation("androidx.multidex:multidex:2.0.1")
 }
