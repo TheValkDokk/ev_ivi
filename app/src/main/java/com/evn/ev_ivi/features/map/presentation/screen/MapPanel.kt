@@ -54,16 +54,12 @@ fun MapPanelScreen() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    var currentPos = FloatPoint(
-                        KN_DEFAULT_POS_X.toFloat(),
-                        KN_DEFAULT_POS_Y.toFloat()
-                    )
                     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
                     fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener { loc ->
                         val startLat = loc.latitude
                         val startLong = loc.longitude
                         val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
-                        currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
+                        val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
                         activity.mapView.animateCamera(
                             cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
                             duration = 400,
