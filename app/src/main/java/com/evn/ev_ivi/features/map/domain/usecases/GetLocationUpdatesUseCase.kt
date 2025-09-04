@@ -9,5 +9,6 @@ class GetLocationUpdatesUseCase(
     private val locationRepository: LocationRepository
 ) {
     operator fun invoke(): Flow<Location> = locationRepository.getLocationUpdates()
-//        .filter { it.accuracy < 50f }
+        // Uncomment to filter by accuracy if needed
+        // .filter { it.accuracy < 50f }
 }

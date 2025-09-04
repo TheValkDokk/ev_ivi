@@ -25,6 +25,8 @@ class LocationRepositoryImpl(
         return callbackFlow {
             val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
                 .setMinUpdateIntervalMillis(2000L)
+                .setMaxUpdateDelayMillis(1000L) // Faster initial response
+                .setWaitForAccurateLocation(false) // Don't wait for high accuracy initially
                 .build()
 
             val locationCallback = object : LocationCallback() {
@@ -37,6 +39,19 @@ class LocationRepositoryImpl(
             }
 
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                // First, get the last known location immediately
+                locationClient.lastLocation
+                    .addOnSuccessListener { lastLocation ->
+                        lastLocation?.let {
+                            Log.d("LocationRepositoryImpl", "lastKnownLocation: ${it.latitude}, ${it.longitude}")
+                            trySend(it)
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.w("LocationRepositoryImpl", "Failed to get last known location: ${exception.message}")
+                    }
+                
+                // Then start continuous location updates
                 locationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
             }
 

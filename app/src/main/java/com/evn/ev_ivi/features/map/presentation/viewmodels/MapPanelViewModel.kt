@@ -2,6 +2,7 @@ package com.evn.ev_ivi.features.map.presentation.viewmodels
 
 import android.app.Application
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.evn.ev_ivi.MainApplication
@@ -35,6 +36,15 @@ class MapPanelViewModel(
 
     private val _trip = MutableStateFlow<KNTrip?>(null)
     val trip = _trip.asStateFlow()
+
+    private val _isFirstMapOpen = MutableStateFlow(true)
+    val isFirstMapOpen = _isFirstMapOpen.asStateFlow()
+
+    private val _currentUserMarker = MutableStateFlow<KNMapMarker?>(null)
+    val currentUserMarker = _currentUserMarker.asStateFlow()
+
+    private val _previousMarkerLocation = MutableStateFlow<Location?>(null)
+    val previousMarkerLocation = _previousMarkerLocation.asStateFlow()
 
     init {
         MainApplication.knsdk = KNSDK.apply {
@@ -85,6 +95,7 @@ class MapPanelViewModel(
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             getLocationUpdatesUseCase().collect { location ->
+                Log.d("LocationUpdates", "Received location: ${location.latitude} ${location.longitude}")
                 _locationState.value = location
             }
         }
@@ -92,6 +103,56 @@ class MapPanelViewModel(
 
     fun stopLocationUpdates() {
         locationJob?.cancel()
+    }
+
+    fun markFirstMapOpenComplete() {
+        _isFirstMapOpen.value = false
+    }
+
+    fun setCurrentUserMarker(marker: KNMapMarker) {
+        _currentUserMarker.value = marker
+    }
+
+    fun getCurrentUserMarker(): KNMapMarker? {
+        return _currentUserMarker.value
+    }
+
+    fun clearCurrentUserMarker() {
+        _currentUserMarker.value = null
+    }
+
+    private fun calculateDistance(loc1: Location, loc2: Location): Float {
+        return loc1.distanceTo(loc2)
+    }
+
+    fun shouldUpdateMarker(newLocation: Location): Boolean {
+        val previousLocation = _previousMarkerLocation.value
+        return if (previousLocation == null) {
+            Log.d("MapPanelViewModel", "First location, updating marker")
+            true
+        } else {
+            val distance = calculateDistance(previousLocation, newLocation)
+            Log.d("MapPanelViewModel", "Distance from previous location: ${distance}m")
+            distance > 3.0f
+        }
+    }
+
+    fun updatePreviousMarkerLocation(location: Location) {
+        _previousMarkerLocation.value = location
+    }
+
+    fun removeCurrentUserMarker(mapView: com.kakaomobility.knsdk.map.knmapview.KNMapView?) {
+        val currentMarker = _currentUserMarker.value
+        if (currentMarker != null && mapView != null) {
+           try {
+               mapView.removeMarker(currentMarker)
+               mapView.removeMarkersAll()
+               clearCurrentUserMarker()
+               _previousMarkerLocation.value = null
+           }catch (e: Exception){
+
+           }
+        }
     }
 
     override fun onCleared() {

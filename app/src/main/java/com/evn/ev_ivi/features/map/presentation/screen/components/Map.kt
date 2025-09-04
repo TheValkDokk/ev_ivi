@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ fun Map(
     var mapBindingComplete by remember { mutableStateOf(false) }
     val trip by viewModel.trip.collectAsState()
     val locationState by viewModel.locationState.collectAsState()
+    val isFirstMapOpen by viewModel.isFirstMapOpen.collectAsState()
 
     val hasPermission = rememberLocationPermission(
         context = LocalContext.current
@@ -89,7 +91,7 @@ fun Map(
         }
     }
 
-    LaunchedEffect(locationState, mapBindingComplete) {
+    LaunchedEffect(locationState, mapBindingComplete, isFirstMapOpen) {
         Log.d("LOCATION", "LocationState: $locationState")
         if (mapBindingComplete && locationState != null) {
             val loc = locationState!!
@@ -98,20 +100,35 @@ fun Map(
             val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
             val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
 
-            // Clear existing markers (optional, depending on your needs)
-//            activity.mapView?.removeAllMarkers()
+            if (viewModel.shouldUpdateMarker(loc)) {
+                Log.d("LOCATION", "Location moved more than 3m, updating marker")
+                
+                viewModel.removeCurrentUserMarker(activity.mapView)
 
-            // Add new marker
-            val marker = KNMapMarker(currentPos)
-            activity.mapView?.addMarker(marker)
+                val marker = KNMapMarker(currentPos)
+                activity.mapView.addMarker(marker)
+                viewModel.setCurrentUserMarker(marker)
+                
+                viewModel.updatePreviousMarkerLocation(loc)
+            } else {
+                Log.d("LOCATION", "Location change less than 3m, keeping existing marker")
+            }
 
-            // Animate camera
-            activity.mapView?.animateCamera(
-                cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
-                duration = 400,
-                withUserLocation = true,
-                useNorthHeadingMode = true
-            )
+            if (isFirstMapOpen) {
+                activity.mapView.animateCamera(
+                    cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
+                    duration = 400,
+                    withUserLocation = true,
+                    useNorthHeadingMode = true
+                )
+                viewModel.markFirstMapOpenComplete()
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.removeCurrentUserMarker(activity.mapView)
         }
     }
 
