@@ -8,13 +8,26 @@ import androidx.lifecycle.viewModelScope
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.domain.usecases.GetLocationUpdatesUseCase
+import com.kakaomobility.knsdk.KNCarFuel
+import com.kakaomobility.knsdk.KNCarType
 import com.kakaomobility.knsdk.KNLanguageType
+import com.kakaomobility.knsdk.KNRoutePriority
 import com.kakaomobility.knsdk.KNSDK
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_X
+import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
 import com.kakaomobility.knsdk.common.gps.WGS84ToKATEC
+import com.kakaomobility.knsdk.common.objects.KNError
 import com.kakaomobility.knsdk.common.objects.KNPOI
+import com.kakaomobility.knsdk.common.util.DoublePoint
+import com.kakaomobility.knsdk.common.util.FloatPoint
+import com.kakaomobility.knsdk.common.util.IntPoint
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
+import com.kakaomobility.knsdk.trip.knrouteconfiguration.KNRouteConfiguration
 import com.kakaomobility.knsdk.trip.kntrip.KNTrip
+import com.kakaomobility.knsdk.trip.kntrip.knroute.KNRoute
+import com.kakaomobility.knsdk.ui.utils.getAddressWithReverseGeocodeResult
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +49,9 @@ class MapPanelViewModel(
 
     private val _trip = MutableStateFlow<KNTrip?>(null)
     val trip = _trip.asStateFlow()
+
+    private val _routes = MutableStateFlow<List<KNRoute>?>(null)
+    val routes = _routes.asStateFlow()
 
     private val _isFirstMapOpen = MutableStateFlow(true)
     val isFirstMapOpen = _isFirstMapOpen.asStateFlow()
@@ -69,24 +85,82 @@ class MapPanelViewModel(
         return KNMapMarker(pos.toFloatPoint())
     }
 
-    fun onNavigate(startLat: Double, startLong: Double, end: MapLocation) {
-        val startLoc = MainApplication.knsdk.convertWGS84ToKATEC(
-            startLong,
-            startLat
-        )
-        val startPoi = KNPOI("current", startLoc.x.toInt(), startLoc.y.toInt(), "current")
-
+    suspend fun onNavigate(end: MapLocation) {
         val goalLoc = MainApplication.knsdk.convertWGS84ToKATEC(
             end.lng,
             end.lat
         )
         val goalPoi = KNPOI("목적지", goalLoc.x.toInt(), goalLoc.y.toInt(), "목적지")
-
-        MainApplication.knsdk.makeTripWithStart(startPoi, goalPoi, null) { error, trip ->
-            if (error != null) {
-                print("Error")
-            } else {
+        route(
+            goalPoi,
+            null,
+            0,
+            KNRoutePriority.KNRoutePriority_Recommand
+        ) { error, trip, routes ->
+            if (error == null) {
                 _trip.value = trip
+                _routes.value = routes
+            } else {
+                Log.e("KNSDK", "Failed to route: $error")
+            }
+        }
+    }
+
+    suspend fun route(
+        aDestination: KNPOI?,
+        aWayPoints: MutableList<KNPOI>?,
+        aAvoidOption: Int,
+        aRouteOption: KNRoutePriority,
+        aCompletion: ((KNError?, KNTrip?, MutableList<KNRoute>?) -> Unit)?
+    ) {
+        coroutineScope {
+            if (aDestination != null) {
+                val pos = KNSDK.sharedGpsManager()?.recentGpsData?.pos
+
+                if(pos == null) return@coroutineScope
+
+                KNSDK.reverseGeocodeWithPos(pos) { aReverseGeocodeError, _, aDoName, aSiGunGuName, aDongName ->
+                    val address = if (aReverseGeocodeError != null) {
+                        "현위치"
+                    } else {
+                        getAddressWithReverseGeocodeResult(aDoName, aSiGunGuName, aDongName)
+                            ?: "현위치"
+                    }
+
+                    val start = KNPOI(address, pos.x.toInt(), pos.y.toInt(), address)
+                    val goal = KNPOI(
+                        aDestination.name,
+                        aDestination.pos.x,
+                        aDestination.pos.y,
+                        aDestination.address
+                    )
+
+                    MainApplication.knsdk.makeTripWithStart(
+                        start,
+                        goal,
+                        if (aWayPoints != null && aWayPoints.size > 0) aWayPoints else null
+                    ) { aError, aTrip ->
+                        if (aError != null) {
+
+                            aCompletion?.invoke(aError, null, null)
+
+                        } else {
+                            val routeConfig = KNRouteConfiguration(
+                                KNCarType.KNCarType_3,
+                                KNCarFuel.KNCarFuel_Gasoline,
+                            )
+                            aTrip?.setRouteConfig(routeConfig)
+                            aTrip?.routeWithPriority(
+                                aRouteOption,
+                                aAvoidOption
+                            ) { aError2, aRoutes ->
+                                aCompletion?.invoke(aError2, aTrip, aRoutes)
+                            }
+                        }
+                    }
+                }
+            } else {
+                aCompletion?.invoke(null, null, null)
             }
         }
     }
@@ -95,7 +169,10 @@ class MapPanelViewModel(
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             getLocationUpdatesUseCase().collect { location ->
-                Log.d("LocationUpdates", "Received location: ${location.latitude} ${location.longitude}")
+                Log.d(
+                    "LocationUpdates",
+                    "Received location: ${location.latitude} ${location.longitude}"
+                )
                 _locationState.value = location
             }
         }
@@ -144,14 +221,14 @@ class MapPanelViewModel(
     fun removeCurrentUserMarker(mapView: com.kakaomobility.knsdk.map.knmapview.KNMapView?) {
         val currentMarker = _currentUserMarker.value
         if (currentMarker != null && mapView != null) {
-           try {
-               mapView.removeMarker(currentMarker)
-               mapView.removeMarkersAll()
-               clearCurrentUserMarker()
-               _previousMarkerLocation.value = null
-           }catch (e: Exception){
+            try {
+                mapView.removeMarker(currentMarker)
+                mapView.removeMarkersAll()
+                clearCurrentUserMarker()
+                _previousMarkerLocation.value = null
+            } catch (e: Exception) {
 
-           }
+            }
         }
     }
 

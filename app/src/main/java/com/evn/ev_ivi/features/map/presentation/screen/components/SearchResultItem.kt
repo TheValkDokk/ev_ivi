@@ -13,9 +13,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
 import com.google.android.gms.location.LocationServices
@@ -30,19 +32,15 @@ fun SearchResultItem(
     modifier: Modifier = Modifier,
     mapViewModel: MapPanelViewModel = koinViewModel()
 ) {
-    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
-                val locationProvider = LocationServices.getFusedLocationProviderClient(context)
-                locationProvider.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                    .addOnSuccessListener { currentLocation ->
-                        val startLat = currentLocation.latitude
-                        val startLong = currentLocation.longitude
-                        Log.d("WWWW" , "startLat: $startLat, startLong: $startLong")
-                        mapViewModel.onNavigate(startLat, startLong, location)
-                    }
+                coroutineScope.launch {
+                    mapViewModel.onNavigate( location)
+                }
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {

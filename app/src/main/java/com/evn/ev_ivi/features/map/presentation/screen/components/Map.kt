@@ -24,9 +24,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.kakaomobility.knsdk.KNRoutePriority
 import com.kakaomobility.knsdk.common.util.FloatPoint
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
+import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCoordinateRegion
 import com.kakaomobility.knsdk.map.knmapview.KNMapView
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
@@ -43,6 +46,7 @@ fun Map(
     var isMapReady by remember { mutableStateOf(false) }
     var mapBindingComplete by remember { mutableStateOf(false) }
     val trip by viewModel.trip.collectAsState()
+    val routes by viewModel.routes.collectAsState()
     val locationState by viewModel.locationState.collectAsState()
     val isFirstMapOpen by viewModel.isFirstMapOpen.collectAsState()
 
@@ -51,6 +55,7 @@ fun Map(
     )
 
     val activity = LocalContext.current as MainActivity
+    val context = LocalContext.current
 
     fun initTrip() {
         trip?.let { it ->
@@ -79,7 +84,21 @@ fun Map(
 
     LaunchedEffect(trip) {
         if (trip != null) {
-            initTrip()
+
+        }
+    }
+
+    LaunchedEffect(routes) {
+        if (routes != null) {
+            activity.mapView.setRoutes(routes!!)
+            val region = KNMapCoordinateRegion.initWithRoute(routes!!)
+            val camUpdate = KNMapCameraUpdate.fitTo(region)
+            activity.mapView.animateCamera(
+                camUpdate,
+                duration = 500,
+                withUserLocation = true,
+                useNorthHeadingMode = true
+            )
         }
     }
 
@@ -102,13 +121,13 @@ fun Map(
 
             if (viewModel.shouldUpdateMarker(loc)) {
                 Log.d("LOCATION", "Location moved more than 3m, updating marker")
-                
+
                 viewModel.removeCurrentUserMarker(activity.mapView)
 
                 val marker = KNMapMarker(currentPos)
                 activity.mapView.addMarker(marker)
                 viewModel.setCurrentUserMarker(marker)
-                
+
                 viewModel.updatePreviousMarkerLocation(loc)
             } else {
                 Log.d("LOCATION", "Location change less than 3m, keeping existing marker")
@@ -158,7 +177,10 @@ fun Map(
                     }
                 },
                 update = { view ->
-                    Log.d("UPDATE", "Map AndroidView update - isMapReady: $isMapReady, mapBindingComplete: $mapBindingComplete")
+                    Log.d(
+                        "UPDATE",
+                        "Map AndroidView update - isMapReady: $isMapReady, mapBindingComplete: $mapBindingComplete"
+                    )
                     if (mapBindingComplete && !isMapReady) {
                         view.invalidate()
                         view.requestLayout()
@@ -166,7 +188,7 @@ fun Map(
                 },
                 modifier = Modifier.fillMaxSize()
             )
-            
+
             // Show loading indicator while map is binding
             if (!mapBindingComplete) {
                 Box(
