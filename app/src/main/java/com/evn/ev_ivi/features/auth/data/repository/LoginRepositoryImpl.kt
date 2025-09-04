@@ -1,6 +1,5 @@
 package com.evn.ev_ivi.features.auth.data.repository
 
-import android.content.SharedPreferences
 import com.evn.ev_ivi.features.auth.data.datasource.remote.AuthRemoteDatasource
 import com.evn.ev_ivi.features.auth.domain.repository.LoginRepository
 

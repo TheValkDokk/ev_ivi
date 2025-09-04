@@ -1,27 +1,37 @@
 package com.evn.ev_ivi.features.map.presentation.viewmodels
 
-import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
+import android.location.Location
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
+import com.evn.ev_ivi.features.map.domain.usecases.GetLocationUpdatesUseCase
 import com.kakaomobility.knsdk.KNLanguageType
 import com.kakaomobility.knsdk.KNSDK
 import com.kakaomobility.knsdk.common.gps.WGS84ToKATEC
 import com.kakaomobility.knsdk.common.objects.KNPOI
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.trip.kntrip.KNTrip
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import okhttp3.internal.platform.PlatformRegistry.applicationContext
 
 class MapPanelViewModel(
+    private val getLocationUpdatesUseCase: GetLocationUpdatesUseCase
 ) : ViewModel() {
     private val _kakaoInit = MutableStateFlow(false)
     val kakaoInit = _kakaoInit.asStateFlow()
 
     val routeCustomObjectList = arrayListOf<KNMapMarker>()
+
+    private val _locationState = MutableStateFlow<Location?>(null)
+    val locationState: StateFlow<Location?> = _locationState.asStateFlow()
+
+    private var locationJob: Job? = null
 
     private val _trip = MutableStateFlow<KNTrip?>(null)
     val trip = _trip.asStateFlow()
@@ -69,5 +79,23 @@ class MapPanelViewModel(
                 _trip.value = trip
             }
         }
+    }
+
+    fun startLocationUpdates() {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            getLocationUpdatesUseCase().collect { location ->
+                _locationState.value = location
+            }
+        }
+    }
+
+    fun stopLocationUpdates() {
+        locationJob?.cancel()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopLocationUpdates()
     }
 }

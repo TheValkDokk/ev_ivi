@@ -1,8 +1,6 @@
 package com.evn.ev_ivi.features.map.presentation.screen.components
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,15 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
-import com.evn.ev_ivi.features.map.wgs84ToWcongnamul
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
-import kotlin.math.absoluteValue
 
 @SuppressLint("MissingPermission")
 @Composable

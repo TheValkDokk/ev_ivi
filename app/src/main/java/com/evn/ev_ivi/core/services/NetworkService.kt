@@ -1,6 +1,5 @@
 package com.evn.ev_ivi.core.services
 
-import android.content.SharedPreferences
 import com.evn.ev_ivi.core.common.domain.repository.AuthRepository
 import com.evn.ev_ivi.features.auth.data.datasource.remote.AuthApi
 import com.evn.ev_ivi.features.map.data.datasource.remote.MapSearchApi

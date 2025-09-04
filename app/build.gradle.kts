@@ -71,19 +71,21 @@ dependencies {
     implementation(libs.koin.core)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
 
-    // Kakao Navigation SDK - complete dependency set
+    // Kakao Navigation SDK
     implementation("com.kakaomobility.knsdk:knsdk_ui:1.9.4")
     
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")

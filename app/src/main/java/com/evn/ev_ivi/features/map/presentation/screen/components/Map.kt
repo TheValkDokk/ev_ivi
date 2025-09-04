@@ -3,13 +3,10 @@ package com.evn.ev_ivi.features.map.presentation.screen.components
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,18 +23,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import com.kakaomobility.knsdk.KNRoutePriority
-import com.kakaomobility.knsdk.KNSDK
-import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_X
-import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
 import com.kakaomobility.knsdk.common.util.FloatPoint
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
 import com.kakaomobility.knsdk.map.knmapview.KNMapView
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
-import com.kakaomobility.knsdk.ui.view.KNNaviView
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 
 @SuppressLint("ContextCastToActivity", "MissingPermission")
@@ -51,6 +42,7 @@ fun Map(
     var isMapReady by remember { mutableStateOf(false) }
     var mapBindingComplete by remember { mutableStateOf(false) }
     val trip by viewModel.trip.collectAsState()
+    val locationState by viewModel.locationState.collectAsState()
 
     val hasPermission = rememberLocationPermission(
         context = LocalContext.current
@@ -89,42 +81,39 @@ fun Map(
         }
     }
 
-    // Force recomposition when map binding is complete
     LaunchedEffect(mapBindingComplete) {
         if (mapBindingComplete) {
-            // Small delay to ensure the map view is fully rendered
             delay(100)
+            viewModel.startLocationUpdates()
             isMapReady = true
         }
     }
 
-//    Box(
-//        modifier = modifier
-//            .fillMaxSize()
-//            .padding(16.dp),
-//        contentAlignment = Alignment.Center
-//    ) {
-//        if (kakaoInit && hasPermission) {
-//            AndroidView(
-//                factory = { context ->
-//                    KNNaviView(context).apply {
-//                        useDarkMode = true
-//                        activity.naviView = this
-//                    }
-//                },
-//                update = { view ->
-//                    Log.d("UPDATE", "UPDATE")
-//                    if (!isMapReady) {
-//                        isMapReady = true
-//                    }
-//                },
-//                modifier = Modifier.fillMaxSize()
-//            )
-//        } else {
-//            CircularProgressIndicator()
-//        }
-//    }
+    LaunchedEffect(locationState, mapBindingComplete) {
+        Log.d("LOCATION", "LocationState: $locationState")
+        if (mapBindingComplete && locationState != null) {
+            val loc = locationState!!
+            val startLat = loc.latitude
+            val startLong = loc.longitude
+            val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
+            val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
 
+            // Clear existing markers (optional, depending on your needs)
+//            activity.mapView?.removeAllMarkers()
+
+            // Add new marker
+            val marker = KNMapMarker(currentPos)
+            activity.mapView?.addMarker(marker)
+
+            // Animate camera
+            activity.mapView?.animateCamera(
+                cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
+                duration = 400,
+                withUserLocation = true,
+                useNorthHeadingMode = true
+            )
+        }
+    }
 
     Box(
         modifier = modifier
@@ -142,21 +131,6 @@ fun Map(
                                 activity.mapView = this
                                 if (error == null) {
                                     mapBindingComplete = true
-                                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
-                                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener { loc ->
-                                        val startLat = loc.latitude
-                                        val startLong = loc.longitude
-                                        val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
-                                        val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
-                                        val marker = KNMapMarker(currentPos)
-                                        activity.mapView.addMarker(marker)
-                                        activity.mapView.animateCamera(
-                                            cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
-                                            duration = 400,
-                                            withUserLocation = true,
-                                            useNorthHeadingMode = true,
-                                        )
-                                    }
                                 } else {
                                     Log.e("KNSDK", "Failed to bind map view: $error")
                                 }
