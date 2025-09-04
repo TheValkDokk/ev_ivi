@@ -8,7 +8,9 @@ import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.kakaomobility.knsdk.KNLanguageType
 import com.kakaomobility.knsdk.KNSDK
+import com.kakaomobility.knsdk.common.gps.WGS84ToKATEC
 import com.kakaomobility.knsdk.common.objects.KNPOI
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.trip.kntrip.KNTrip
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,8 @@ class MapPanelViewModel(
 ) : ViewModel() {
     private val _kakaoInit = MutableStateFlow(false)
     val kakaoInit = _kakaoInit.asStateFlow()
+
+    val routeCustomObjectList = arrayListOf<KNMapMarker>()
 
     private val _trip = MutableStateFlow<KNTrip?>(null)
     val trip = _trip.asStateFlow()
@@ -38,6 +42,11 @@ class MapPanelViewModel(
                 }
             }
         }
+    }
+
+    fun createMapMarker(long: Double, lat: Double): KNMapMarker {
+        val pos = WGS84ToKATEC(lat, long)
+        return KNMapMarker(pos.toFloatPoint())
     }
 
     fun onNavigate(startLat: Double, startLong: Double, end: MapLocation) {

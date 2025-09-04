@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +36,7 @@ import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
 import com.kakaomobility.knsdk.common.util.FloatPoint
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
 import com.kakaomobility.knsdk.map.knmapview.KNMapView
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
 import com.kakaomobility.knsdk.ui.view.KNNaviView
 import org.koin.compose.viewmodel.koinViewModel
@@ -47,6 +49,7 @@ fun Map(
 ) {
     val kakaoInit by viewModel.kakaoInit.collectAsState()
     var isMapReady by remember { mutableStateOf(false) }
+    var mapBindingComplete by remember { mutableStateOf(false) }
     val trip by viewModel.trip.collectAsState()
 
     val hasPermission = rememberLocationPermission(
@@ -59,7 +62,7 @@ fun Map(
         trip?.let { it ->
             val curRoutePriority = KNRoutePriority.KNRoutePriority_Recommand
             val curAvoidOptions = 4 or 8
-            it.routeWithPriority(curRoutePriority, curAvoidOptions) { error, _ ->
+            it.routeWithPriority(curRoutePriority, curAvoidOptions) { _, _ ->
                 MainApplication.knsdk.sharedGuidance()?.apply {
                     guideStateDelegate = activity
                     locationGuideDelegate = activity
@@ -83,6 +86,15 @@ fun Map(
     LaunchedEffect(trip) {
         if (trip != null) {
             initTrip()
+        }
+    }
+
+    // Force recomposition when map binding is complete
+    LaunchedEffect(mapBindingComplete) {
+        if (mapBindingComplete) {
+            // Small delay to ensure the map view is fully rendered
+            delay(100)
+            isMapReady = true
         }
     }
 
@@ -124,19 +136,20 @@ fun Map(
             AndroidView(
                 factory = { context ->
                     KNMapView(context).apply {
-
                         val theme = KNMapTheme.driveDay()
                         try {
                             MainApplication.knsdk.bindingMapView(this, theme) { error ->
-                                Log.d("KNSDK", "bindingMapView result: $error")
                                 activity.mapView = this
                                 if (error == null) {
+                                    mapBindingComplete = true
                                     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
                                     fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).addOnSuccessListener { loc ->
                                         val startLat = loc.latitude
                                         val startLong = loc.longitude
                                         val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
                                         val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
+                                        val marker = KNMapMarker(currentPos)
+                                        activity.mapView.addMarker(marker)
                                         activity.mapView.animateCamera(
                                             cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
                                             duration = 400,
@@ -154,13 +167,26 @@ fun Map(
                     }
                 },
                 update = { view ->
-                    Log.d("UPDATE", "UPDATE")
-                    if (!isMapReady) {
-                        isMapReady = true
+                    Log.d("UPDATE", "Map AndroidView update - isMapReady: $isMapReady, mapBindingComplete: $mapBindingComplete")
+                    if (mapBindingComplete && !isMapReady) {
+                        view.invalidate()
+                        view.requestLayout()
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
+            
+            // Show loading indicator while map is binding
+            if (!mapBindingComplete) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.7f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
         } else {
             CircularProgressIndicator()
         }
