@@ -1,7 +1,6 @@
 package com.evn.ev_ivi.features.map.presentation.screen.components
 
 import android.annotation.SuppressLint
-import android.graphics.RectF
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,14 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.toColorInt
 import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.core.utils.toFloatPoint
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.kakaomobility.knsdk.KNRoutePriority
-import com.kakaomobility.knsdk.common.util.FloatPoint
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCoordinateRegion
 import com.kakaomobility.knsdk.map.knmapview.KNMapView
@@ -37,11 +33,10 @@ import com.kakaomobility.knsdk.map.knmapview.idl.KNMapRouteProperties
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapRouteTheme
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.entity.KNAlterRouteInfo
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.entity.KNRouteColors
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
-import androidx.core.graphics.toColorInt
-import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.entity.KNAlterRouteInfo
 
 @SuppressLint("ContextCastToActivity", "MissingPermission")
 @Composable
@@ -56,6 +51,7 @@ fun Map(
     val routes by viewModel.routes.collectAsState()
     val locationState by viewModel.locationState.collectAsState()
     val isFirstMapOpen by viewModel.isFirstMapOpen.collectAsState()
+    val isNavigating by viewModel.isNavigating.collectAsState()
 
     val destinationMarker by viewModel.destinationMarker.collectAsState()
 
@@ -65,31 +61,6 @@ fun Map(
 
     val activity = LocalContext.current as MainActivity
 
-    fun initTrip() {
-        trip?.let { it ->
-            val curRoutePriority = KNRoutePriority.KNRoutePriority_Recommand
-            val curAvoidOptions = 4 or 8
-            it.routeWithPriority(curRoutePriority, curAvoidOptions) { _, _ ->
-                MainApplication.knsdk.sharedGuidance()?.apply {
-                    guideStateDelegate = activity
-                    locationGuideDelegate = activity
-                    routeGuideDelegate = activity
-                    safetyGuideDelegate = activity
-                    voiceGuideDelegate = activity
-                    citsGuideDelegate = activity
-
-                    activity.naviView.initWithGuidance(
-                        this,
-                        trip,
-                        curRoutePriority,
-                        curAvoidOptions
-                    )
-                }
-            }
-
-        }
-    }
-
     LaunchedEffect(trip) {
         if (trip != null) {
 
@@ -97,11 +68,11 @@ fun Map(
     }
 
     LaunchedEffect(destinationMarker) {
-        if(!mapBindingComplete) return@LaunchedEffect
-        if(destinationMarker != null){
+        if (!mapBindingComplete) return@LaunchedEffect
+        if (destinationMarker != null) {
             val marker = destinationMarker!!
             activity.mapView.addMarker(marker)
-        }else{
+        } else {
             activity.mapView.removeMarkersAll()
         }
     }
@@ -128,7 +99,7 @@ fun Map(
         }
     }
 
-    LaunchedEffect(locationState, mapBindingComplete, isFirstMapOpen, destinationMarker) {
+    LaunchedEffect(locationState, mapBindingComplete, isFirstMapOpen, destinationMarker, isNavigating) {
         if (mapBindingComplete && locationState != null) {
             val loc = locationState!!
             val currentPos = loc.toFloatPoint()
@@ -161,75 +132,90 @@ fun Map(
         }
     }
 
+
+//    if(isNavigating){
+//        NaviMap()
+//    }
+//    else{
+//
+//        }
+//    }
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (kakaoInit && hasPermission) {
-            AndroidView(
-                factory = { context ->
-                    KNMapView(context).apply {
-                        val theme = KNMapTheme.driveDay()
-                        try {
-                            MainApplication.knsdk.bindingMapView(this, theme) { error ->
-                                val ww = KNMapRouteProperties()
-                                ww.theme = KNMapRouteTheme(
-                                    -1f,
-                                    -1f,
-                                    lineColors = KNRouteColors().apply {
-                                        normal = "#4A90E2".toColorInt()
-                                        trafficJamModerate = "#4A90E2".toColorInt()
-                                        trafficJamHeavy = "#4A90E2".toColorInt()
-                                        trafficJamVeryHeavy = "#4A90E2".toColorInt()
-                                        unknown = "#4A90E2".toColorInt()
-                                        blocked = "#4A90E2".toColorInt()
-                                    },
-                                    KNRouteColors(),
-                                    KNAlterRouteInfo().apply {
-
-                                    }
-                                )
-                                routeProperties = ww
-                                activity.mapView = this
-                                if (error == null) {
-                                    mapBindingComplete = true
-                                } else {
-                                    Log.e("KNSDK", "Failed to bind map view: $error")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("KNSDK", "Exception during map binding: ${e.message}", e)
-                        }
-                    }
-                },
-                update = { view ->
-                    Log.d(
-                        "UPDATE",
-                        "Map AndroidView update - isMapReady: $isMapReady, mapBindingComplete: $mapBindingComplete"
-                    )
-                    if (mapBindingComplete && !isMapReady) {
-                        view.invalidate()
-                        view.requestLayout()
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
+        if (isNavigating) {
+            NaviMap(
+                modifier = modifier.fillMaxSize()
             )
+        } else
+            if (kakaoInit && hasPermission) {
+                AndroidView(
+                    factory = { context ->
+                        KNMapView(context).apply {
+                            val theme = KNMapTheme.driveDay()
+                            try {
+                                MainApplication.knsdk.bindingMapView(this, theme) { error ->
+                                    val ww = KNMapRouteProperties()
+                                    ww.theme = KNMapRouteTheme(
+                                        -1f,
+                                        -1f,
+                                        lineColors = KNRouteColors().apply {
+                                            normal = "#4A90E2".toColorInt()
+                                            trafficJamModerate = "#4A90E2".toColorInt()
+                                            trafficJamHeavy = "#4A90E2".toColorInt()
+                                            trafficJamVeryHeavy = "#4A90E2".toColorInt()
+                                            unknown = "#4A90E2".toColorInt()
+                                            blocked = "#4A90E2".toColorInt()
+                                        },
+                                        KNRouteColors(),
+                                        KNAlterRouteInfo().apply {
 
-            // Show loading indicator while map is binding
-            if (!mapBindingComplete) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.7f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color.White)
+                                        }
+                                    )
+                                    routeProperties = ww
+                                    activity.mapView = this
+                                    if (error == null) {
+                                        mapBindingComplete = true
+                                    } else {
+                                        Log.e("KNSDK", "Failed to bind map view: $error")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("KNSDK", "Exception during map binding: ${e.message}", e)
+                            }
+                        }
+                    },
+                    update = { view ->
+                        Log.d(
+                            "UPDATE",
+                            "Map AndroidView update - isMapReady: $isMapReady, mapBindingComplete: $mapBindingComplete"
+                        )
+                        if (mapBindingComplete && !isMapReady) {
+                            view.invalidate()
+                            view.requestLayout()
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Show loading indicator while map is binding
+                if (!mapBindingComplete) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.7f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
                 }
+            } else {
+                CircularProgressIndicator()
             }
-        } else {
-            CircularProgressIndicator()
-        }
     }
+
+
 }

@@ -33,13 +33,18 @@ import com.kakaomobility.knsdk.map.knmapview.KNMapView
 import com.kakaomobility.knsdk.trip.kntrip.knroute.KNRoute
 import com.kakaomobility.knsdk.ui.view.KNNaviView
 
-class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuidance_LocationGuideDelegate,
+class MainActivity : AppCompatActivity(),
+    KNGuidance_GuideStateDelegate,
+    KNGuidance_LocationGuideDelegate,
     KNGuidance_RouteGuideDelegate,
-    KNGuidance_SafetyGuideDelegate, KNGuidance_VoiceGuideDelegate, KNGuidance_CitsGuideDelegate,
+    KNGuidance_SafetyGuideDelegate,
+    KNGuidance_VoiceGuideDelegate,
+    KNGuidance_CitsGuideDelegate,
     KNGPSReceiver {
 
     lateinit var naviView: KNNaviView
     lateinit var mapView: KNMapView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -51,11 +56,16 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
             }
         }
     }
+
     override fun guidanceCheckingRouteChange(aGuidance: KNGuidance) {
         naviView.guidanceCheckingRouteChange(aGuidance)
     }
 
-    override fun guidanceDidUpdateRoutes(aGuidance: KNGuidance, aRoutes: List<KNRoute>, aMultiRouteInfo: KNMultiRouteInfo?) {
+    override fun guidanceDidUpdateRoutes(
+        aGuidance: KNGuidance,
+        aRoutes: List<KNRoute>,
+        aMultiRouteInfo: KNMultiRouteInfo?
+    ) {
         naviView.guidanceDidUpdateRoutes(aGuidance, aRoutes, aMultiRouteInfo)
     }
 
@@ -71,7 +81,14 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
         naviView.guidanceOutOfRoute(aGuidance)
     }
 
-    override fun guidanceRouteChanged(aGuidance: KNGuidance, aFromRoute: KNRoute, aFromLocation: KNLocation, aToRoute: KNRoute, aToLocation: KNLocation, aChangeReason: KNGuideRouteChangeReason) {
+    override fun guidanceRouteChanged(
+        aGuidance: KNGuidance,
+        aFromRoute: KNRoute,
+        aFromLocation: KNLocation,
+        aToRoute: KNRoute,
+        aToLocation: KNLocation,
+        aChangeReason: KNGuideRouteChangeReason
+    ) {
         naviView.guidanceRouteChanged(aGuidance)
     }
 
@@ -83,7 +100,10 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
         naviView.guidanceRouteUnchangedWithError(aGuidnace, aError)
     }
 
-    override fun guidanceDidUpdateLocation(aGuidance: KNGuidance, aLocationGuide: KNGuide_Location) {
+    override fun guidanceDidUpdateLocation(
+        aGuidance: KNGuidance,
+        aLocationGuide: KNGuide_Location
+    ) {
         naviView.guidanceDidUpdateLocation(aGuidance, aLocationGuide)
     }
 
@@ -91,11 +111,17 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
         naviView.guidanceDidUpdateRouteGuide(aGuidance, aRouteGuide)
     }
 
-    override fun guidanceDidUpdateAroundSafeties(aGuidance: KNGuidance, aSafeties: List<KNSafety>?) {
+    override fun guidanceDidUpdateAroundSafeties(
+        aGuidance: KNGuidance,
+        aSafeties: List<KNSafety>?
+    ) {
         naviView.guidanceDidUpdateAroundSafeties(aGuidance, aSafeties)
     }
 
-    override fun guidanceDidUpdateSafetyGuide(aGuidance: KNGuidance, aSafetyGuide: KNGuide_Safety?) {
+    override fun guidanceDidUpdateSafetyGuide(
+        aGuidance: KNGuidance,
+        aSafetyGuide: KNGuide_Safety?
+    ) {
         naviView.guidanceDidUpdateSafetyGuide(aGuidance, aSafetyGuide)
     }
 
@@ -103,7 +129,11 @@ class MainActivity : AppCompatActivity(), KNGuidance_GuideStateDelegate, KNGuida
         naviView.didFinishPlayVoiceGuide(aGuidance, aVoiceGuide)
     }
 
-    override fun shouldPlayVoiceGuide(aGuidance: KNGuidance, aVoiceGuide: KNGuide_Voice, aNewData: MutableList<ByteArray>): Boolean {
+    override fun shouldPlayVoiceGuide(
+        aGuidance: KNGuidance,
+        aVoiceGuide: KNGuide_Voice,
+        aNewData: MutableList<ByteArray>
+    ): Boolean {
         return naviView.shouldPlayVoiceGuide(aGuidance, aVoiceGuide, aNewData)
     }
 

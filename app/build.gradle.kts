@@ -79,16 +79,18 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     debugImplementation("androidx.compose.ui:ui-tooling")
-    
+
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
 
     // Kakao Navigation SDK
     implementation("com.kakaomobility.knsdk:knsdk_ui:1.9.4")
-    
+
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.databinding:viewbinding:8.12.1")
-    
+
     // MultiDex support for large apps
     implementation("androidx.multidex:multidex:2.0.1")
+
+    implementation(libs.androidx.compose.material3)
 }

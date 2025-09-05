@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.evn.ev_ivi.MainApplication
 import com.evn.ev_ivi.core.utils.toFloatPoint
+import com.evn.ev_ivi.core.utils.toKNPOI
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.domain.usecases.GetLocationUpdatesUseCase
 import com.kakaomobility.knsdk.KNCarFuel
@@ -14,14 +15,9 @@ import com.kakaomobility.knsdk.KNCarType
 import com.kakaomobility.knsdk.KNLanguageType
 import com.kakaomobility.knsdk.KNRoutePriority
 import com.kakaomobility.knsdk.KNSDK
-import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_X
-import com.kakaomobility.knsdk.common.gps.KN_DEFAULT_POS_Y
-import com.kakaomobility.knsdk.common.gps.WGS84ToKATEC
+import com.kakaomobility.knsdk.common.gps.KNGPSBackgroundUpdateType
 import com.kakaomobility.knsdk.common.objects.KNError
 import com.kakaomobility.knsdk.common.objects.KNPOI
-import com.kakaomobility.knsdk.common.util.DoublePoint
-import com.kakaomobility.knsdk.common.util.FloatPoint
-import com.kakaomobility.knsdk.common.util.IntPoint
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
 import com.kakaomobility.knsdk.trip.knrouteconfiguration.KNRouteConfiguration
 import com.kakaomobility.knsdk.trip.kntrip.KNTrip
@@ -43,6 +39,9 @@ class MapPanelViewModel(
 
     private val _isPreviewRoute = MutableStateFlow(false)
     val isPreviewRoute = _isPreviewRoute.asStateFlow()
+
+    private val _isNavigating = MutableStateFlow(false)
+    val isNavigating = _isNavigating.asStateFlow()
 
 
     private val _locationState = MutableStateFlow<Location?>(null)
@@ -81,8 +80,17 @@ class MapPanelViewModel(
             ) { error ->
                 if (error == null) {
                     _kakaoInit.value = true
+                    MainApplication.knsdk.sharedGpsManager()?.backgroundUpdateType =
+                        KNGPSBackgroundUpdateType.KNGPSBackgroundUpdateType_Always
                 }
             }
+        }
+    }
+
+    fun toggleNavigation() {
+        _isNavigating.value = !_isNavigating.value
+        if(_isNavigating.value) {
+            _isFirstMapOpen.value = true
         }
     }
 
@@ -123,6 +131,7 @@ class MapPanelViewModel(
     ) {
         coroutineScope {
             if (aDestination != null && _locationState.value != null) {
+                val loc = _locationState.value!!
                 val pos = _locationState.value!!.toFloatPoint()
 
                 KNSDK.reverseGeocodeWithPos(pos.toDoublePoint()) { aReverseGeocodeError, _, aDoName, aSiGunGuName, aDongName ->
@@ -133,16 +142,15 @@ class MapPanelViewModel(
                             ?: "현위치"
                     }
 
-                    val start = KNPOI(address, pos.x.toInt(), pos.y.toInt(), address)
                     val goal = KNPOI(
-                        aDestination.name,
+                        address,
                         aDestination.pos.x,
                         aDestination.pos.y,
                         aDestination.address
                     )
 
                     MainApplication.knsdk.makeTripWithStart(
-                        start,
+                        loc.toKNPOI(),
                         goal,
                         if (aWayPoints != null && aWayPoints.isNotEmpty()) aWayPoints else null
                     ) { aError, aTrip ->
