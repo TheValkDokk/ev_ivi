@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
+import com.evn.ev_ivi.core.utils.toFloatPoint
 import com.evn.ev_ivi.features.map.presentation.screen.components.Map
 import com.evn.ev_ivi.features.map.presentation.screen.components.SearchPanel
 import com.evn.ev_ivi.features.map.presentation.screen.components.SpeechToTextButton
@@ -49,29 +50,9 @@ fun MapPanelScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-//                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
-//                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-//                        .addOnSuccessListener { loc ->
-//                            if (loc != null) {
-//                                val startLat = loc.latitude
-//                                val startLong = loc.longitude
-//                                val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
-//                                val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
-//                                activity.mapView.animateCamera(
-//                                    cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
-//                                    duration = 400,
-//                                    withUserLocation = true,
-//                                    useNorthHeadingMode = true,
-//                                )
-//                            }
-//                        }
-//                        .addOnFailureListener { exception ->
-//                            // Handle location retrieval failure
-//                            println("Failed to get location: ${exception.message}")
-//                        }
                     val loc = locationState
-                    if(loc!= null){
-                        val currentPos = FloatPoint(loc.longitude.toFloat(), loc.latitude.toFloat())
+                    if (loc != null) {
+                        val currentPos = loc.toFloatPoint()
                         activity.mapView.animateCamera(
                             cameraUpdate = KNMapCameraUpdate.targetTo(currentPos).zoomTo(2.5f),
                             duration = 400,

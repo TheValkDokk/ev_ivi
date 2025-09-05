@@ -1,6 +1,7 @@
 package com.evn.ev_ivi.features.map.presentation.screen.components
 
 import android.annotation.SuppressLint
+import android.graphics.RectF
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.evn.ev_ivi.MainActivity
 import com.evn.ev_ivi.MainApplication
+import com.evn.ev_ivi.core.utils.toFloatPoint
 import com.evn.ev_ivi.features.map.presentation.viewmodels.MapPanelViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -114,10 +116,7 @@ fun Map(
         Log.d("LOCATION", "LocationState: $locationState")
         if (mapBindingComplete && locationState != null) {
             val loc = locationState!!
-            val startLat = loc.latitude
-            val startLong = loc.longitude
-            val ss = MainApplication.knsdk.convertWGS84ToKATEC(startLong, startLat)
-            val currentPos = FloatPoint(ss.x.toFloat(), ss.y.toFloat())
+            val currentPos = loc.toFloatPoint()
 
             if (viewModel.shouldUpdateMarker(loc)) {
                 Log.d("LOCATION", "Location moved more than 3m, updating marker")

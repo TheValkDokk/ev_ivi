@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.evn.ev_ivi.MainApplication
+import com.evn.ev_ivi.core.utils.toFloatPoint
 import com.evn.ev_ivi.features.map.domain.entities.MapLocation
 import com.evn.ev_ivi.features.map.domain.usecases.GetLocationUpdatesUseCase
 import com.kakaomobility.knsdk.KNCarFuel
@@ -114,12 +115,10 @@ class MapPanelViewModel(
         aCompletion: ((KNError?, KNTrip?, MutableList<KNRoute>?) -> Unit)?
     ) {
         coroutineScope {
-            if (aDestination != null) {
-                val pos = KNSDK.sharedGpsManager()?.recentGpsData?.pos
+            if (aDestination != null && _locationState.value != null) {
+                val pos = _locationState.value!!.toFloatPoint()
 
-                if(pos == null) return@coroutineScope
-
-                KNSDK.reverseGeocodeWithPos(pos) { aReverseGeocodeError, _, aDoName, aSiGunGuName, aDongName ->
+                KNSDK.reverseGeocodeWithPos(pos.toDoublePoint()) { aReverseGeocodeError, _, aDoName, aSiGunGuName, aDongName ->
                     val address = if (aReverseGeocodeError != null) {
                         "현위치"
                     } else {
@@ -138,12 +137,10 @@ class MapPanelViewModel(
                     MainApplication.knsdk.makeTripWithStart(
                         start,
                         goal,
-                        if (aWayPoints != null && aWayPoints.size > 0) aWayPoints else null
+                        if (aWayPoints != null && aWayPoints.isNotEmpty()) aWayPoints else null
                     ) { aError, aTrip ->
                         if (aError != null) {
-
                             aCompletion?.invoke(aError, null, null)
-
                         } else {
                             val routeConfig = KNRouteConfiguration(
                                 KNCarType.KNCarType_3,
@@ -169,10 +166,6 @@ class MapPanelViewModel(
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             getLocationUpdatesUseCase().collect { location ->
-                Log.d(
-                    "LocationUpdates",
-                    "Received location: ${location.latitude} ${location.longitude}"
-                )
                 _locationState.value = location
             }
         }
