@@ -41,7 +41,9 @@ class MapPanelViewModel(
     private val _kakaoInit = MutableStateFlow(false)
     val kakaoInit = _kakaoInit.asStateFlow()
 
-    val routeCustomObjectList = arrayListOf<KNMapMarker>()
+    private val _isPreviewRoute = MutableStateFlow(false)
+    val isPreviewRoute = _isPreviewRoute.asStateFlow()
+
 
     private val _locationState = MutableStateFlow<Location?>(null)
     val locationState: StateFlow<Location?> = _locationState.asStateFlow()
@@ -63,6 +65,9 @@ class MapPanelViewModel(
     private val _previousMarkerLocation = MutableStateFlow<Location?>(null)
     val previousMarkerLocation = _previousMarkerLocation.asStateFlow()
 
+    private val _destinationMarker = MutableStateFlow<KNMapMarker?>(null)
+    val destinationMarker = _destinationMarker.asStateFlow()
+
     init {
         MainApplication.knsdk = KNSDK.apply {
             val mainApplication = applicationContext as Application
@@ -81,9 +86,8 @@ class MapPanelViewModel(
         }
     }
 
-    fun createMapMarker(long: Double, lat: Double): KNMapMarker {
-        val pos = WGS84ToKATEC(lat, long)
-        return KNMapMarker(pos.toFloatPoint())
+    fun createMapMarker(loc: MapLocation): KNMapMarker {
+        return KNMapMarker(loc.toFloatPoint())
     }
 
     suspend fun onNavigate(end: MapLocation) {
@@ -91,6 +95,7 @@ class MapPanelViewModel(
             end.lng,
             end.lat
         )
+        _destinationMarker.value = null
         val goalPoi = KNPOI("목적지", goalLoc.x.toInt(), goalLoc.y.toInt(), "목적지")
         route(
             goalPoi,
@@ -101,6 +106,8 @@ class MapPanelViewModel(
             if (error == null) {
                 _trip.value = trip
                 _routes.value = routes
+                _isPreviewRoute.value = true
+                _destinationMarker.value = createMapMarker(end)
             } else {
                 Log.e("KNSDK", "Failed to route: $error")
             }
@@ -181,10 +188,6 @@ class MapPanelViewModel(
 
     fun setCurrentUserMarker(marker: KNMapMarker) {
         _currentUserMarker.value = marker
-    }
-
-    fun getCurrentUserMarker(): KNMapMarker? {
-        return _currentUserMarker.value
     }
 
     fun clearCurrentUserMarker() {

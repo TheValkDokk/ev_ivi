@@ -33,10 +33,15 @@ import com.kakaomobility.knsdk.common.util.FloatPoint
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCameraUpdate
 import com.kakaomobility.knsdk.map.knmaprenderer.objects.KNMapCoordinateRegion
 import com.kakaomobility.knsdk.map.knmapview.KNMapView
+import com.kakaomobility.knsdk.map.knmapview.idl.KNMapRouteProperties
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.KNMapMarker
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapRouteTheme
 import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.KNMapTheme
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.entity.KNRouteColors
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.core.graphics.toColorInt
+import com.kakaomobility.knsdk.map.uicustomsupport.renewal.theme.base.entity.KNAlterRouteInfo
 
 @SuppressLint("ContextCastToActivity", "MissingPermission")
 @Composable
@@ -52,12 +57,13 @@ fun Map(
     val locationState by viewModel.locationState.collectAsState()
     val isFirstMapOpen by viewModel.isFirstMapOpen.collectAsState()
 
+    val destinationMarker by viewModel.destinationMarker.collectAsState()
+
     val hasPermission = rememberLocationPermission(
         context = LocalContext.current
     )
 
     val activity = LocalContext.current as MainActivity
-    val context = LocalContext.current
 
     fun initTrip() {
         trip?.let { it ->
@@ -90,6 +96,16 @@ fun Map(
         }
     }
 
+    LaunchedEffect(destinationMarker) {
+        if(!mapBindingComplete) return@LaunchedEffect
+        if(destinationMarker != null){
+            val marker = destinationMarker!!
+            activity.mapView.addMarker(marker)
+        }else{
+            activity.mapView.removeMarkersAll()
+        }
+    }
+
     LaunchedEffect(routes) {
         if (routes != null) {
             activity.mapView.setRoutes(routes!!)
@@ -112,15 +128,12 @@ fun Map(
         }
     }
 
-    LaunchedEffect(locationState, mapBindingComplete, isFirstMapOpen) {
-        Log.d("LOCATION", "LocationState: $locationState")
+    LaunchedEffect(locationState, mapBindingComplete, isFirstMapOpen, destinationMarker) {
         if (mapBindingComplete && locationState != null) {
             val loc = locationState!!
             val currentPos = loc.toFloatPoint()
 
             if (viewModel.shouldUpdateMarker(loc)) {
-                Log.d("LOCATION", "Location moved more than 3m, updating marker")
-
                 viewModel.removeCurrentUserMarker(activity.mapView)
 
                 val marker = KNMapMarker(currentPos)
@@ -128,8 +141,6 @@ fun Map(
                 viewModel.setCurrentUserMarker(marker)
 
                 viewModel.updatePreviousMarkerLocation(loc)
-            } else {
-                Log.d("LOCATION", "Location change less than 3m, keeping existing marker")
             }
 
             if (isFirstMapOpen) {
@@ -163,6 +174,24 @@ fun Map(
                         val theme = KNMapTheme.driveDay()
                         try {
                             MainApplication.knsdk.bindingMapView(this, theme) { error ->
+                                val ww = KNMapRouteProperties()
+                                ww.theme = KNMapRouteTheme(
+                                    -1f,
+                                    -1f,
+                                    lineColors = KNRouteColors().apply {
+                                        normal = "#4A90E2".toColorInt()
+                                        trafficJamModerate = "#4A90E2".toColorInt()
+                                        trafficJamHeavy = "#4A90E2".toColorInt()
+                                        trafficJamVeryHeavy = "#4A90E2".toColorInt()
+                                        unknown = "#4A90E2".toColorInt()
+                                        blocked = "#4A90E2".toColorInt()
+                                    },
+                                    KNRouteColors(),
+                                    KNAlterRouteInfo().apply {
+
+                                    }
+                                )
+                                routeProperties = ww
                                 activity.mapView = this
                                 if (error == null) {
                                     mapBindingComplete = true
